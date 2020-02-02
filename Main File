@@ -1,0 +1,155 @@
+#!/usr/bin/env python
+
+from tkinter import Canvas, Tk; import helpers; import utilities; import time; import random
+
+gui = Tk()
+gui.title('My Aquarium')
+
+# initialize canvas:
+window_width = gui.winfo_screenwidth()
+window_height = gui.winfo_screenheight()
+canvas = Canvas(gui, width=1000, height=1000, background='#000022')
+
+canvas.pack()
+
+########################## MY CODE ##############################
+helpers.make_bubble(canvas,(500,500),200,outline='white',tag='bubble')
+helpers.make_bubble2(canvas,(500,500),200,outline='steelblue',tag='bubble1')
+helpers.make_flooring(canvas,(500,500),100)
+
+canvas.create_text(
+    (window_width/10, window_height / 12), 
+    text='R-click to add a jellyfish.', 
+    font=("Arial",20),fill='white')
+
+canvas.create_text(
+    (window_width/11, window_height / 18), 
+    text='L-click to add a plant.', 
+    font=("Arial", 20),fill='white')
+
+for i in range(30):
+    helpers.make_landscape_object(canvas,(35*i,690),50)
+helpers.make_stationaryplants(canvas,(600,650),150,fill='dark green')
+helpers.make_stationaryplants(canvas,(500,650),100,fill='dark green')
+helpers.make_stationaryplants(canvas,(700,650),125,fill='dark green')
+helpers.make_stationaryplants(canvas,(900,650),100,fill='dark green',tag='stationaryplants')
+helpers.make_stationaryplants(canvas,(910,675),70,fill='dark green')
+
+helpers.make_creature(canvas, (640, 80),60,fill='indianred1',tag='creature1')
+helpers.make_creature(canvas, (200, 200),100,fill='indianred1',tag='creature2')
+helpers.make_creature(canvas, (200, 200),40,fill='blue',tag='creature3')
+helpers.make_jellyfish(canvas,(300,400),100)
+helpers.make_jellyfish(canvas,(500,400),50,tag='jellyfish1')
+helpers.make_blobfish(canvas,(800,600),100, tag='blob1')
+helpers.make_blobfish(canvas,(900,475),40,tag='blob2')
+helpers.make_sparkles(canvas,(100,50),5)
+
+MOUSE_CLICK = '<Button-1>'
+
+def make_stationaryplants_from_click(event):
+    helpers.make_stationaryplants(
+        canvas,
+        (event.x, event.y),
+        random.uniform(20, 100), # random width
+        fill='dark green'
+    )
+canvas.bind(MOUSE_CLICK, make_stationaryplants_from_click)
+
+UP_KEY = 8320768
+DOWN_KEY = 8255233
+LEFT_KEY = 8124162
+RIGHT_KEY = 8189699
+MOUSE_CLICK = '<Button-2>'
+KEY_PRESS = '<Key>'
+
+def make_newjellyfish(event):
+    helpers.make_babyjellyfish(
+        canvas,
+        (event.x, event.y),
+        20, 
+        tag='jellyfish3'
+    )
+    canvas.focus_set()
+
+def move_newjellyfish(event):
+    # print(event)
+    distance = 10
+    if event.keycode == UP_KEY:
+        utilities.update_position(canvas, tag='jellyfish3', x=0, y=-distance)
+    elif event.keycode == DOWN_KEY:
+        utilities.update_position(canvas, tag='jellyfish3', x=0, y=distance)
+    elif event.keycode == LEFT_KEY:
+        utilities.update_position(canvas, tag='jellyfish3', x=-distance, y=0)
+    elif event.keycode == RIGHT_KEY:
+        utilities.update_position(canvas, tag='jellyfish3', x=distance, y=0)
+    else:
+        print(event.keycode)
+
+canvas.bind(MOUSE_CLICK, make_newjellyfish) 
+canvas.bind(KEY_PRESS, move_newjellyfish)
+
+i = 0
+size = 100
+growing = True
+counter = 0
+acceleration = 0.05
+
+while True:
+    time.sleep(0.00005)
+    if counter % 2 == 0:
+        helpers.make_sparkles(canvas,(100,50),size=5,tag='sparkles',fill='cornsilk2',outline='cornsilk2')
+        counter += 1     
+    else:
+        canvas.delete('sparkles')
+        counter += 1
+    if utilities.get_right(canvas,'creature2') > 0:
+        acceleration = acceleration + 0.5
+        utilities.update_position(canvas, 'creature2', x=-2-acceleration, y=0)
+    else:
+        acceleration = 0.2
+        utilities.update_position(canvas, 'creature2', x=1000+utilities.get_width(canvas,'creature2'), y=0)
+    if utilities.get_right(canvas,'creature1') > 0:
+        utilities.update_position(canvas, 'creature1', x=-2, y=0)
+    else:
+        utilities.update_position(canvas, 'creature1', x=1000+utilities.get_width(canvas,'creature1'), y=0)
+    if growing:
+        time.sleep(0.05)
+        i += 0.5
+        canvas.delete('blob1')
+        canvas.delete('blob2')
+        helpers.make_blobfish(canvas,(900,475),size = 100*i/5, tag='blob2')
+        helpers.make_blobfish(canvas,(800,600),size = 100*i/5, tag='blob1')
+        canvas.update
+        if i == 5:
+            growing = False
+    else:
+        time.sleep(0.05)
+        i -= 0.5
+        canvas.delete('blob1')
+        canvas.delete('blob2')
+        helpers.make_blobfish(canvas,(900,475),size = 100*i/5, tag='blob2')
+        helpers.make_blobfish(canvas,(800,600),size = 100*i/5, tag='blob1')
+        canvas.update
+        if i == 0:
+            growing = True
+    for bubble in range(100):
+        if utilities.get_top(canvas,'bubble2'+str(bubble)) > 0:
+            utilities.update_position(canvas,'bubble2'+str(bubble), x=0, y=-5)
+        else:
+            utilities.update_position(canvas,'bubble2'+str(bubble),x=0,y=window_height+10)
+    if utilities.get_left(canvas,'jellyfish1') > 200 and utilities.get_top(canvas,'jellyfish1') > 300:
+        utilities.update_position(canvas,'jellyfish1',x=-5,y=0)
+    elif utilities.get_top(canvas,'jellyfish1') > 300 and utilities.get_left(canvas,'jellyfish1') == 200:
+        utilities.update_position(canvas,'jellyfish1',x=0,y=-5)
+    elif utilities.get_top(canvas,'jellyfish1') < 150 and utilities.get_left(canvas,'jellyfish1') < 700:
+        utilities.update_position(canvas,'jellyfish1',x=5,y=0)
+    elif utilities.get_left(canvas,'jellyfish1') > 600:
+        utilities.update_position(canvas,'jellyfish1',x=0,y=5)
+    else:
+        utilities.update_position(canvas,'jellyfish1',x=0,y=-5)
+
+    gui.update()
+
+########################## MY CODE END ############################## 
+
+canvas.mainloop()
